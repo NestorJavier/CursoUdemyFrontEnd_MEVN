@@ -9,6 +9,7 @@
                 <v-spacer></v-spacer>
                 <v-text-field class="text-xs-center" v-model="search" append-icon="search" label="Búsqueda" single-line hide-details></v-text-field>
                 <v-spacer></v-spacer>
+                <!--Dialogo de Editar-->
                 <v-dialog v-model="dialog" max-width="500px">
                     <template v-slot:activator="{ on }">
                     <v-btn color="primary" dark class="mb-2" v-on="on">Nuevo</v-btn>
@@ -21,20 +22,15 @@
                     <v-card-text>
                         <v-container>
                         <v-row>
-                            <v-col cols="12" sm="6" md="4">
-                            <v-text-field v-model="editedItem.name" label="Nombre"></v-text-field>
+                            <v-col cols="12" sm="12" md="12">
+                              <v-text-field v-model="nombre" label="Nombre"></v-text-field>
                             </v-col>
-                            <v-col cols="12" sm="6" md="4">
-                            <v-text-field v-model="editedItem.calories" label="Calories"></v-text-field>
+                            <v-col cols="12" sm="12" md="12">
+                              <v-text-field v-model="descripcion" label="Descripción"></v-text-field>
                             </v-col>
-                            <v-col cols="12" sm="6" md="4">
-                            <v-text-field v-model="editedItem.fat" label="Fat (g)"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" sm="6" md="4">
-                            <v-text-field v-model="editedItem.carbs" label="Carbs (g)"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" sm="6" md="4">
-                            <v-text-field v-model="editedItem.protein" label="Protein (g)"></v-text-field>
+                            <v-col cols="12" sm="12" md="12" v-show="valida === 1">
+                              <div class="red--text" v-for="v in validaMensaje" :key="v" v-text="v">
+                              </div>
                             </v-col>
                         </v-row>
                         </v-container>
@@ -43,14 +39,40 @@
                     <v-card-actions>
                         <v-spacer></v-spacer>
                         <v-btn color="blue darken-1" text @click="close">Cancelar</v-btn>
-                        <v-btn color="blue darken-1" text @click="save">Guardar</v-btn>
+                        <v-btn color="blue darken-1" text @click="guardar">Guardar</v-btn>
+                    </v-card-actions>
+                    </v-card>
+                </v-dialog>
+                <!--Dialogo de Activar Desactivar-->
+                <v-dialog v-model="adModal" max-width="500px">
+                    
+                    <v-card>
+                      <v-card-title class="headline" v-if="adAccion==1">
+                          Activar Item
+                      </v-card-title>
+                      <v-card-title class="headline" v-if="adAccion==2">
+                          Desactivar Item
+                      </v-card-title>
+
+                      <v-card-text>
+                          Estás a punto de 
+                            <span v-if="adAccion==1">activar</span>
+                            <span v-if="adAccion==2">desactivar</span>
+                          el item {{adNombre}}
+                      </v-card-text>
+
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="green darken-1" flat="flat" text @click="close">Cancelar</v-btn>
+                        <v-btn v-if="adAccion==1" color="orange darken-4" flat="flat" text @click="activar()">Activar</v-btn>
+                        <v-btn v-if="adAccion==2" color="orange darken-4" flat="flat" text @click="desactivar()">Desactivar</v-btn>
                     </v-card-actions>
                     </v-card>
                 </v-dialog>
                 </v-toolbar>
             </template>
             <template v-slot:item.estado="{ item }">
-                <div v-if="item">
+                <div v-if="item.estado">
                   <span class="blue--text">
                     Activo
                   </span>
@@ -63,10 +85,15 @@
             </template>
             <template v-slot:item.opciones="{ item }">
                 <v-icon small class="mr-2" @click="editItem(item)" color="teal">edit</v-icon>
-                <v-icon small @click="deleteItem(item)" color="pink">delete</v-icon>
+                <template v-if="item.estado">
+                  <v-icon small @click="activarDesactivar(2, item)" color="pink">block</v-icon>
+                </template>
+                <template v-else>
+                  <v-icon small @click="activarDesactivar(1, item)" color="pink">check</v-icon>
+                </template>
             </template>
             <template v-slot:no-data>
-                <v-btn color="primary" @click="listar">Reset</v-btn>
+                <v-btn color="primary" @click="listar">Resetear</v-btn>
             </template>
             </v-data-table>
         </v-flex>
@@ -88,42 +115,21 @@ export default {
         { text: "Estado", value: "estado", sortable: false},     
          
       ],
-      desserts: [
-        {
-          name: 'Frozen Yogurt',
-          calories: 159,
-          fat: 6.0,
-          carbs: 24,
-          protein: 4.0,
-        },
-        {
-          name: 'Ice cream sandwich',
-          calories: 237,
-          fat: 9.0,
-          carbs: 37,
-          protein: 4.3,
-        },
-      ],
       editedIndex: -1,
-      editedItem: {
-        name: '',
-        calories: 0,
-        fat: 0,
-        carbs: 0,
-        protein: 0,
-      },
-      defaultItem: {
-        name: '',
-        calories: 0,
-        fat: 0,
-        carbs: 0,
-        protein: 0,
-      }
+      _id:'',
+      nombre:'',
+      descripcion:'',
+      valida:0,
+      validaMensaje:[],
+      adModal:0,
+      adAccion:0,
+      adNombre:'',
+      adId:'',
     };
   },
   computed: {
     formTitle () {
-      return this.editedIndex === -1 ? 'Nuevo Item' : 'Editar Item'
+      return this.editedIndex === -1 ? 'Nuevo Registro' : 'Editar Registro'
     }
   },
 
@@ -138,6 +144,23 @@ export default {
   },
 
   methods: {
+    validar(){
+      this.valida=0;
+      this.validaMensaje=[];
+      if(this.nombre.length < 1 || this.nombre.length > 50)
+      {
+        this.validaMensaje.push("El nombre de la categoria debe tener de 1 a 50 caracteres.");
+      }
+      if(this.descripcion.length > 255)
+      {
+        this.validaMensaje.push("La descripción de la categoria debe tener un maximo de 255 caracteres.");
+      }
+      if(this.validaMensaje.length > 0)
+      {
+        this.valida=1;
+      }
+      return this.valida;
+    },
       listar(){
               let me = this;
               //GET hace referencia al metodo http para hacer la petición a esa ruta
@@ -147,41 +170,93 @@ export default {
               console.log(e);
           });
       },
-    initialize () {
-      this.desserts = [
-        {
-          name: 'Frozen Yogurt',
-          calories: 159,
-          fat: 6.0,
-          carbs: 24,
-          protein: 4.0,
+      limpiar(){
+        this._id='';
+        this.nombre='';
+        this.descripcion='';
+        this.valida=0;
+        this.validaMensaje=[];
+        this.editedIndex=-1;
+      },
+      guardar(){
+        if(this.validar()){//Si validar regres un 1 entonces algun dato esta mal
+          return;//por ende, tenemos que detener la ejecución del gurdado
         }
-      ]
-    },
+        let me = this;
+        if(this.editedIndex > -1){
+          //Codigo para editar
+          axios.put('categoria/update', {'_id': this._id,'nombre':this.nombre, 'descripcion':this.descripcion})
+          .then(function (response) {//Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
+            me.limpiar();
+            me.close();
+            me.listar();
+          })
+          .catch(function (error) {//Si la petición es fallida esperaremos un error que va a regresar el servidor
+            console.log(error);
+          });
+        }else{
+          //Codigo para guardar
+          axios.post('categoria/add', {'nombre':this.nombre, 'descripcion':this.descripcion})
+          .then(function (response) {//Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
+            me.limpiar();
+            me.close();
+            me.listar();
+          })
+          .catch(function (error) {//Si la petición es fallida esperaremos un error que va a regresar el servidor
+            console.log(error);
+          });
+        }
+      },
     editItem (item) {
-      this.editedIndex = this.desserts.indexOf(item)
-      this.editedItem = Object.assign({}, item)
-      this.dialog = true
+      this._id = item._id;
+      this.nombre = item.nombre;
+      this.descripcion = item.descripcion;
+      this.dialog = true;
+      this.editedIndex = 1;
     },
-    deleteItem (item) {
-      const index = this.desserts.indexOf(item)
-      confirm('Are you sure you want to delete this item?') && 
-      this.desserts.splice(index, 1)
+    activarDesactivar (accion, item) {
+      this.adModal = 1;
+      this.adNombre = item.nombre;
+      this.adId = item._id;
+      if(accion == 1){
+        this.adAccion = accion;
+      }else if(accion == 2){
+        this.adAccion = accion;
+      }else{
+        this.adModal = 0;
+      }
+    },
+    activar(){
+      let me = this;
+      axios.put('categoria/activate', {'_id': this.adId})
+          .then(function (response) {//Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
+            me.adModal = 0;
+            me.adAccion = 0;
+            me.adNombre = '';
+            me.adId = '';
+            me.listar();
+          })
+          .catch(function (error) {//Si la petición es fallida esperaremos un error que va a regresar el servidor
+            console.log(error);
+      });
+    },
+    desactivar(){
+      let me = this;
+      axios.put('categoria/deactivate', {'_id': this.adId})
+          .then(function (response) {//Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
+            me.adModal = 0;
+            me.adAccion = 0;
+            me.adNombre = '';
+            me.adId = '';
+            me.listar();
+          })
+          .catch(function (error) {//Si la petición es fallida esperaremos un error que va a regresar el servidor
+            console.log(error);
+      });
     },
     close () {
-      this.dialog = false
-      setTimeout(() => {
-        this.editedItem = Object.assign({}, this.defaultItem)
-        this.editedIndex = -1
-      }, 300)
-    },
-    save () {
-      if (this.editedIndex > -1) {
-        Object.assign(this.desserts[this.editedIndex], this.editedItem)
-      } else {
-        this.desserts.push(this.editedItem)
-      }
-      this.close()
+      this.dialog = false;
+      this.adModal = 0;
     },
   },
 };
