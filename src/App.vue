@@ -213,6 +213,26 @@ export default {
     return{
       drawer: null,
     }
+  },
+  computed:{
+    logueado(){
+      return this.st/////////////////////
+    },
+    esAdministrador(){
+
+    },
+    esAlmaceneero(){
+
+    },
+    esVendedor(){
+      
+    }
+  },
+  created:{
+
+  },
+  methods:{
+
   }
 };
 </script>
