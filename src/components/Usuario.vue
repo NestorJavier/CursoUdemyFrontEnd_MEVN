@@ -1,10 +1,10 @@
 <template>
   <v-layout align-start>
     <v-flex>
-      <v-data-table :headers="headers" :items="categorias" class="elevation-1" :search="search">
+      <v-data-table :headers="headers" :items="usuarios" class="elevation-1" :search="search">
         <template v-slot:top>
           <v-toolbar flat color="white">
-            <v-toolbar-title>Categorías</v-toolbar-title>
+            <v-toolbar-title>Usuarios</v-toolbar-title>
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-spacer></v-spacer>
             <v-text-field
@@ -29,11 +29,37 @@
                 <v-card-text>
                   <v-container>
                     <v-row>
-                      <v-col cols="12" sm="12" md="12">
+                      <v-col cols="12" sm="6" md="6">
                         <v-text-field v-model="nombre" label="Nombre"></v-text-field>
                       </v-col>
-                      <v-col cols="12" sm="12" md="12">
-                        <v-text-field v-model="descripcion" label="Descripción"></v-text-field>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="num_documento" label="Numero Documento"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-flex>
+                            <v-select v-model="rol"
+                                :items="roles" label="Rol">
+                            </v-select>
+                        </v-flex>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-flex>
+                            <v-select v-model="tipo_documento"
+                                :items="documentos" label="Tipo Documentos">
+                            </v-select>
+                        </v-flex>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="direccion" label="Dirección"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="telefono" label="Telefono"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="email" label="Email"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="password" label="Password" type="password"></v-text-field>
                       </v-col>
                       <v-col cols="12" sm="12" md="12" v-show="valida === 1">
                         <div class="red--text" v-for="v in validaMensaje" :key="v" v-text="v"></div>
@@ -116,17 +142,30 @@ export default {
     return {
       dialog: false,
       search: "",
-      categorias: [],
+      usuarios: [],
       headers: [
         { text: "Opciones", value: "opciones", sortable: false },
         { text: "Nombre", value: "nombre", sortable: true },
-        { text: "Descripción", value: "descripcion", sortable: false },
-        { text: "Estado", value: "estado", sortable: false }
+        { text: "Rol", value: "rol", sortable: true },
+        { text: "Tipo Documento", value: "tipo_documento", sortable: true },
+        { text: "Numero Documento", value: "num_documento", sortable: false },
+        { text: "Dirección", value: "direccion", sortable: false },
+        { text: "Telefono", value: "telefono", sortable: false },
+        { text: "Email", value: "email", sortable: false },
+        { text: "Estado", value: "estado", sortable: false },
       ],
       editedIndex: -1,
       _id: "",
       nombre: "",
-      descripcion: "",
+      rol: "",
+      roles: ['Administrador', 'Almacenero', 'Vendedor'],
+      tipo_documento:'',
+      documentos:['DNI', 'RUC', 'PASAPORTE', 'CEDULA'],
+      num_documento:'',
+      telefono:'',
+      direccion:'',
+      email:'',
+      password:'',
       valida: 0,
       validaMensaje: [],
       adModal: 0,
@@ -155,14 +194,39 @@ export default {
     validar() {
       this.valida = 0;
       this.validaMensaje = [];
-      if (this.nombre.length < 1 || this.nombre.length > 50) {
+      if (!this.rol) {
         this.validaMensaje.push(
-          "El nombre de la categoria debe tener de 1 a 50 caracteres."
+          "Seleccione un rol"
         );
       }
-      if (this.descripcion.length > 255) {
+      if (this.nombre.length < 1 || this.nombre.length > 50) {
         this.validaMensaje.push(
-          "La descripción de la categoria debe tener un maximo de 255 caracteres."
+          "El nombre del usuario debe tener de 1 a 50 caracteres."
+        );
+      }
+      if (this.num_documento.length > 20) {
+        this.validaMensaje.push(
+          "El documento debe tener un maximo de 20 caracteres."
+        );
+      }
+      if (this.direccion.length > 70) {
+        this.validaMensaje.push(
+          "La dirección debe tener un maximo de 70 caracteres."
+        );
+      }
+      if (this.telefono.length > 20) {
+        this.validaMensaje.push(  
+          "La dirección debe tener un maximo de 70 caracteres."
+        );
+      }
+      if (this.email.length < 1 || this.email.length > 50) {
+        this.validaMensaje.push(
+          "El email del usuario debe tener de 1 a 50 caracteres."
+        );
+      }
+      if (this.password.length < 1 || this.password.length > 64) {
+        this.validaMensaje.push(
+          "la contraseña del usuario debe tener de 1 a 64 caracteres."
         );
       }
       if (this.validaMensaje.length > 0) {
@@ -176,9 +240,9 @@ export default {
       let configuracion = { headers: header };
       //GET hace referencia al metodo http para hacer la petición a esa ruta
       axios
-        .get("categoria/list", configuracion)
+        .get("usuario/list", configuracion)
         .then(function(response) {
-          me.categorias = response.data;
+          me.usuarios = response.data;
         })
         .catch(function(e) {
           console.log(e);
@@ -187,7 +251,11 @@ export default {
     limpiar() {
       this._id = "";
       this.nombre = "";
-      this.descripcion = "";
+      this.num_documento = "";
+      this.direccion = "";
+      this.telefono = "";
+      this.email = "";
+      this.password = "";
       this.valida = 0;
       this.validaMensaje = [];
       this.editedIndex = -1;
@@ -204,11 +272,17 @@ export default {
         //Codigo para editar
         axios
           .put(
-            "categoria/update",
+            "usuario/update",
             {
-              _id: this._id,
-              nombre: this.nombre,
-              descripcion: this.descripcion
+              '_id': this._id,
+              'rol': this.rol,
+              'nombre': this.nombre, 
+              'tipo_documento': this.tipo_documento,
+              'num_documento': this.num_documento,
+              'telefono': this.telefono,
+              'direccion': this.direccion,
+              'email': this.email,
+              'password': this.password,
             },
             configuracion
           )
@@ -226,8 +300,17 @@ export default {
         //Codigo para guardar
         axios
           .post(
-            "categoria/add",
-            { nombre: this.nombre, descripcion: this.descripcion },
+            "usuario/add",
+            {
+                'rol': this.rol, 
+                'nombre': this.nombre, 
+                'tipo_documento': this.tipo_documento,
+                'num_documento': this.num_documento,
+                'telefono': this.telefono,
+                'direccion': this.direccion,
+                'email': this.email,
+                'password': this.password,
+            },
             configuracion
           )
           .then(function(response) {
@@ -244,8 +327,14 @@ export default {
     },
     editItem(item) {
       this._id = item._id;
+      this.rol = item.rol;
       this.nombre = item.nombre;
-      this.descripcion = item.descripcion;
+      this.tipo_documento = item.tipo_documento;
+      this.num_documento = item.num_documento;
+      this.direccion = item.direccion;
+      this.telefono = item.telefono;
+      this.email = item.email;
+      this.password = item.password;
       this.dialog = true;
       this.editedIndex = 1;
     },
@@ -267,7 +356,7 @@ export default {
       let configuracion = { headers: header };
 
       axios
-        .put("categoria/activate", { _id: this.adId }, configuracion)
+        .put("usuario/activate", { _id: this.adId }, configuracion)
         .then(function(response) {
           //Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
           me.adModal = 0;
@@ -287,7 +376,7 @@ export default {
       let configuracion = { headers: header };
 
       axios
-        .put("categoria/deactivate", { _id: this.adId },configuracion)
+        .put("usuario/deactivate", { _id: this.adId },configuracion)
         .then(function(response) {
           //Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
           me.adModal = 0;

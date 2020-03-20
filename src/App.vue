@@ -4,9 +4,10 @@
       v-model="drawer"
       :clipped="$vuetify.breakpoint.lgAndUp"
       app
+      v-if="logueado"
     >
       <v-list dense><!--Menu-->
-        <template>
+        <template v-if="esAdministrador || esAlmacenero || esVendedor">
           <v-list-item :to="{name:'home'}">
             <v-list-item-action>
               <v-icon>home</v-icon>
@@ -16,7 +17,7 @@
             </v-list-item-title>  
           </v-list-item>
         </template>
-        <template>
+        <template v-if="esAdministrador || esAlmacenero">
           <v-list-group><!--Para agregar submenus-->
             <v-list-item slot="activator"><!--Al hacer click va a agregar subitems-->
               <v-list-item-content>
@@ -35,7 +36,7 @@
               </v-list-item-title>
               </v-list-item-content>
             </v-list-item>
-            <v-list-item :to="{name:'otro'}"><!--:to="{name:''} es para que acceda a una ruta-->
+            <v-list-item :to="{name:'articulo'}"><!--:to="{name:''} es para que acceda a una ruta-->
               <v-list-item-action>
                 <v-icon>table_chart</v-icon>
               </v-list-item-action>
@@ -47,7 +48,7 @@
             </v-list-item>            
           </v-list-group>
         </template>
-        <template>
+        <template v-if="esAdministrador || esAlmacenero">
           <v-list-group><!--Para agregar submenus-->
             <v-list-item slot="activator"><!--Al hacer click va a agregar subitems-->
               <v-list-item-content>
@@ -78,7 +79,7 @@
             </v-list-item>            
           </v-list-group>
         </template>
-        <template>
+        <template v-if="esAdministrador || esVendedor">
           <v-list-group><!--Para agregar submenus-->
             <v-list-item slot="activator"><!--Al hacer click va a agregar subitems-->
               <v-list-item-content>
@@ -97,7 +98,7 @@
               </v-list-item-title>
               </v-list-item-content>
             </v-list-item>
-            <v-list-item :to="{name:''}"><!--:to="{name:''} es para que acceda a una ruta-->
+            <v-list-item :to="{name:'cliente'}"><!--:to="{name:''} es para que acceda a una ruta-->
               <v-list-item-action>
                 <v-icon>table_chart</v-icon>
               </v-list-item-action>
@@ -109,7 +110,7 @@
             </v-list-item>            
           </v-list-group>
         </template>
-        <template>
+        <template v-if="esAdministrador">
           <v-list-group><!--Para agregar submenus-->
             <v-list-item slot="activator"><!--Al hacer click va a agregar subitems-->
               <v-list-item-content>
@@ -118,7 +119,7 @@
                 </v-list-item-title>
               </v-list-item-content>
             </v-list-item>
-            <v-list-item :to="{name:''}"><!--:to="{name:''} es para que acceda a una ruta-->
+            <v-list-item :to="{name:'usuario'}"><!--:to="{name:''} es para que acceda a una ruta-->
               <v-list-item-action>
                 <v-icon>table_chart</v-icon>
               </v-list-item-action>
@@ -130,7 +131,7 @@
             </v-list-item>          
           </v-list-group>
         </template>
-        <template>
+        <template v-if="esAdministrador || esAlmacenero || esVendedor">
           <v-list-group><!--Para agregar submenus-->
             <v-list-item slot="activator"><!--Al hacer click va a agregar subitems-->
               <v-list-item-content>
@@ -178,8 +179,11 @@
         <span class="hidden-sm-and-down">Sistema</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn icon>
-        <v-icon>logout</v-icon>
+      <v-btn @click="salir()" icon v-if="logueado">
+        <v-icon>logout</v-icon> Salir
+      </v-btn>
+      <v-btn :to="{name:'login'}" icon v-else>
+        <v-icon>apps</v-icon> Login
       </v-btn>
     </v-app-bar>
     <v-content>
@@ -211,28 +215,30 @@ export default {
   name: 'App',
   data () {
     return{
-      drawer: null,
+      drawer: true,
     }
   },
   computed:{
     logueado(){
-      return this.st/////////////////////
+      return this.$store.state.usuario;
     },
     esAdministrador(){
-
+      return this.$store.state.usuario && this.$store.state.usuario.rol == "Administrador";
     },
-    esAlmaceneero(){
-
+    esAlmacenero(){
+      return this.$store.state.usuario && this.$store.state.usuario.rol == "Almacenero";
     },
     esVendedor(){
-      
+      return this.$store.state.usuario && this.$store.state.usuario.rol == "Vendedor";
     }
   },
-  created:{
-
+  created(){
+    this.$store.dispatch("autoLogin");
   },
   methods:{
-
+    salir(){
+      this.$store.dispatch("salir");
+    }
   }
 };
 </script>

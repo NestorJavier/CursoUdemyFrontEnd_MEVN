@@ -12,6 +12,9 @@
                        </v-text-field>
                        <v-text-field v-model="password" type="password" color="accent" label="Password" required>
                        </v-text-field>
+                       <v-flex class="red--text">
+                           {{errorM}}
+                       </v-flex>
                    </v-card-text>
                    <v-card-actions class="px-3 pb-3">
                        <v-flex text-xs-right>
@@ -29,16 +32,26 @@ export default {
         return{
             email:'',
             password:'',
+            errorM: null,
         }
     },
     methods:{
         ingresar(){
             axios.post('usuario/login', {email: this.email, password: this.password})
-            .then(function(response){
-                console.log(response.data.user);
-                console.log(response.data.tokenReturn);
-            }).catch(function (error) {
-                console.log(error);
+            .then((respuesta) =>{
+                return respuesta.data;
+            })
+            .then(data =>{
+                this.$store.dispatch("guardarToken", data.tokenReturn);
+                this.$router.push({name: 'home'})
+            })
+            .catch((error) => {
+                if(error.response.status == 404){
+                    console.log('No existe el usuario ó las credenciales son incorrectas');
+                    this.errorM = 'No existe el usuario ó las credenciales son incorrectas';
+                }else{
+                    this.errorM = 'Ocurrio un error con el servidor';
+                }
             });
         }
     }

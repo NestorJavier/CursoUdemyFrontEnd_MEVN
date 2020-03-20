@@ -1,10 +1,10 @@
 <template>
   <v-layout align-start>
     <v-flex>
-      <v-data-table :headers="headers" :items="categorias" class="elevation-1" :search="search">
+      <v-data-table :headers="headers" :items="articulos" class="elevation-1" :search="search">
         <template v-slot:top>
           <v-toolbar flat color="white">
-            <v-toolbar-title>Categorías</v-toolbar-title>
+            <v-toolbar-title>Articulos</v-toolbar-title>
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-spacer></v-spacer>
             <v-text-field
@@ -29,11 +29,27 @@
                 <v-card-text>
                   <v-container>
                     <v-row>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="codigo" label="codigo"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-flex>
+                            <v-select v-model="categoria"
+                                :items="categorias" label="Categoria">
+                            </v-select>
+                        </v-flex>
+                      </v-col>
                       <v-col cols="12" sm="12" md="12">
                         <v-text-field v-model="nombre" label="Nombre"></v-text-field>
                       </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field type="number" v-model="stock" label="stock"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="precio_venta" label="precio_venta"></v-text-field>
+                      </v-col>
                       <v-col cols="12" sm="12" md="12">
-                        <v-text-field v-model="descripcion" label="Descripción"></v-text-field>
+                        <v-text-field v-model="descripcion" label="descripcion"></v-text-field>
                       </v-col>
                       <v-col cols="12" sm="12" md="12" v-show="valida === 1">
                         <div class="red--text" v-for="v in validaMensaje" :key="v" v-text="v"></div>
@@ -116,17 +132,25 @@ export default {
     return {
       dialog: false,
       search: "",
-      categorias: [],
+      articulos: [],
       headers: [
         { text: "Opciones", value: "opciones", sortable: false },
+        { text: "Código", value: "codigo", sortable: false },
         { text: "Nombre", value: "nombre", sortable: true },
+        { text: "Categoria", value: "categoria.nombre", sortable: true },
+        { text: "Stock", value: "stock", sortable: false },
+        { text: "Precio Venta", value: "precio_venta", sortable: false },
         { text: "Descripción", value: "descripcion", sortable: false },
         { text: "Estado", value: "estado", sortable: false }
       ],
       editedIndex: -1,
-      _id: "",
+      categoria: "",
+      categorias: [],
+      codigo: '',
       nombre: "",
-      descripcion: "",
+      stock: 0,
+      precio_venta: 0,
+      descripcion: '',
       valida: 0,
       validaMensaje: [],
       adModal: 0,
@@ -149,20 +173,56 @@ export default {
 
   created() {
     this.listar();
+    this.selectCategoria();
   },
 
   methods: {
+    selectCategoria(){
+      let me = this;
+      let categoriaArray=[];
+      let header = { Token: this.$store.state.token };
+      let configuracion = { headers: header };
+      //GET hace referencia al metodo http para hacer la petición a esa ruta
+      axios
+        .get("categoria/list", configuracion)
+        .then(function(response) {
+          categoriaArray = response.data;
+          categoriaArray.map(function(x){
+            me.categorias.push({text:x.nombre, value:x._id});
+          })
+        })
+        .catch(function(e) {
+          console.log(e);
+        });
+    },
     validar() {
       this.valida = 0;
       this.validaMensaje = [];
-      if (this.nombre.length < 1 || this.nombre.length > 50) {
+      if(!this.categoria){
+        this.validaMensaje.push('Seleccione una categoria')
+      }
+      if (this.codigo.length > 64) {
+        this.validaMensaje.push(
+          "El codigo no debe tener mas de 64 caracteres"
+        );
+      }if (this.nombre.length < 1 || this.nombre.length > 50) {
         this.validaMensaje.push(
           "El nombre de la categoria debe tener de 1 a 50 caracteres."
         );
       }
       if (this.descripcion.length > 255) {
         this.validaMensaje.push(
-          "La descripción de la categoria debe tener un maximo de 255 caracteres."
+          "La descripción del articulo debe tener un maximo de 255 caracteres."
+        );
+      }
+      if(this.stock < 0){
+        this.validaMensaje.push(
+          "Ingrese un stock valido"
+        );
+      }
+      if(this.precio_venta < 0){
+        this.validaMensaje.push(
+          "Ingrese un Precio de venta valido"
         );
       }
       if (this.validaMensaje.length > 0) {
@@ -176,9 +236,9 @@ export default {
       let configuracion = { headers: header };
       //GET hace referencia al metodo http para hacer la petición a esa ruta
       axios
-        .get("categoria/list", configuracion)
+        .get("articulo/list", configuracion)
         .then(function(response) {
-          me.categorias = response.data;
+          me.articulos = response.data;
         })
         .catch(function(e) {
           console.log(e);
@@ -187,6 +247,9 @@ export default {
     limpiar() {
       this._id = "";
       this.nombre = "";
+      this.codigo ='';
+      this.stock=0;
+      this.precio_venta=0;
       this.descripcion = "";
       this.valida = 0;
       this.validaMensaje = [];
@@ -204,11 +267,15 @@ export default {
         //Codigo para editar
         axios
           .put(
-            "categoria/update",
+            "articulo/update",
             {
-              _id: this._id,
-              nombre: this.nombre,
-              descripcion: this.descripcion
+              '_id': this._id,
+              'categoria': this.categoria,
+              'codigo': this.codigo,
+              'nombre': this.nombre,
+              'stock': this.stock,
+              'precio_venta': this.precio_venta,
+              'descripcion': this.descripcion,
             },
             configuracion
           )
@@ -226,8 +293,15 @@ export default {
         //Codigo para guardar
         axios
           .post(
-            "categoria/add",
-            { nombre: this.nombre, descripcion: this.descripcion },
+            "articulo/add",
+            { 
+              'categoria': this.categoria,
+              'codigo': this.codigo,
+              'nombre': this.nombre,
+              'stock': this.stock,
+              'precio_venta': this.precio_venta,
+              'descripcion': this.descripcion,
+            },
             configuracion
           )
           .then(function(response) {
@@ -244,8 +318,12 @@ export default {
     },
     editItem(item) {
       this._id = item._id;
-      this.nombre = item.nombre;
-      this.descripcion = item.descripcion;
+      this.categoria = item.categoria._id,
+      this.codigo = item.codigo,
+      this.nombre = item.nombre,
+      this.stock = item.stock,
+      this.precio_venta = item.precio_venta,
+      this.descripcion = item.descripcion,
       this.dialog = true;
       this.editedIndex = 1;
     },
@@ -267,7 +345,7 @@ export default {
       let configuracion = { headers: header };
 
       axios
-        .put("categoria/activate", { _id: this.adId }, configuracion)
+        .put("articulo/activate", { _id: this.adId }, configuracion)
         .then(function(response) {
           //Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
           me.adModal = 0;
@@ -287,7 +365,7 @@ export default {
       let configuracion = { headers: header };
 
       axios
-        .put("categoria/deactivate", { _id: this.adId },configuracion)
+        .put("articulo/deactivate", { _id: this.adId },configuracion)
         .then(function(response) {
           //Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
           me.adModal = 0;

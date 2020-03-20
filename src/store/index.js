@@ -1,7 +1,7 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import Vue from 'vue';
+import Vuex from 'vuex';
 import decode from 'jwt-decode';
-import router from './router/index.js'
+import router from '../router/index';
 
 Vue.use(Vuex)
 
@@ -23,11 +23,12 @@ export default new Vuex.Store({
     guardarToken({commit}/*Permite realizar una mutación o acceder al state*/, token){
       //almacenar el token en el local storage
       commit("setToken", token);
+      console.log(token);
       commit("setUsuario", decode(token));
-      localStorage.setItem("token", token) ;
+      localStorage.setItem("token", token);
     },
     autoLogin({commit}){
-      //Si ya tengo un token valido en el local storage ya no me va a pedor qie vuelva a acceder al sistema
+      //Si ya tengo un token valido en el local storage ya no me va a pedir que vuelva a acceder al sistema
       let token = localStorage.getItem("token");
       if(token){
         commit("setToken", token);
