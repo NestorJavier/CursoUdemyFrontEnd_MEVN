@@ -6,7 +6,11 @@ import Categoria from '../components/Categoria.vue';
 import Articulo from '../components/Articulo.vue';
 import Usuario from '../components/Usuario.vue';
 import Cliente from '../components/Cliente.vue';
-import Login from '../components/Login.vue'
+import Proveedor from '../components/Proveedor.vue';
+import Login from '../components/Login.vue';
+import Ingreso from '../components/Ingreso.vue';
+import Venta from '../components/Venta.vue';
+
 Vue.use(VueRouter);
 
 const routes = [
@@ -36,6 +40,33 @@ const routes = [
     meta:{//El objeto meta nos indica a que rutas puede acceder que usuario
       administrador: true,
       vendedor: true,
+    }
+  },
+  {
+    path: '/ingreso',
+    name: 'ingreso',
+    component: Ingreso,
+    meta:{//El objeto meta nos indica a que rutas puede acceder que usuario
+      administrador: true,
+      alamacenero: true,
+    }
+  },
+  {
+    path: '/venta',
+    name: 'venta',
+    component: Venta,
+    meta:{//El objeto meta nos indica a que rutas puede acceder que usuario
+      administrador: true,
+      alamacenero: true,
+    }
+  },
+  {
+    path: '/proveedor',
+    name: 'proveedor',
+    component: Proveedor,
+    meta:{//El objeto meta nos indica a que rutas puede acceder que usuario
+      administrador: true,
+      alamacenero: true,
     }
   },
   {

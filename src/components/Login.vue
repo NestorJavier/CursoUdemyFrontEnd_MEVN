@@ -47,7 +47,6 @@ export default {
             })
             .catch((error) => {
                 if(error.response.status == 404){
-                    console.log('No existe el usuario ó las credenciales son incorrectas');
                     this.errorM = 'No existe el usuario ó las credenciales son incorrectas';
                 }else{
                     this.errorM = 'Ocurrio un error con el servidor';

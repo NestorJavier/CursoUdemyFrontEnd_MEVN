@@ -1,13 +1,10 @@
 <template>
   <v-layout align-start>
     <v-flex>
-      <v-data-table :headers="headers" :items="articulos" class="elevation-1" :search="search">
+      <v-data-table :headers="headers" :items="personas" class="elevation-1" :search="search">
         <template v-slot:top>
           <v-toolbar flat color="white">
-            <v-btn @click="crearPDF()">
-              <v-icon>print</v-icon>
-            </v-btn>
-            <v-toolbar-title>Articulos</v-toolbar-title>
+            <v-toolbar-title>Proveedores</v-toolbar-title>
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-spacer></v-spacer>
             <v-text-field
@@ -32,27 +29,28 @@
                 <v-card-text>
                   <v-container>
                     <v-row>
-                      <v-col cols="12" sm="6" md="6">
-                        <v-text-field v-model="codigo" label="codigo"></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="6" md="6">
-                        <v-flex>
-                            <v-select v-model="categoria"
-                                :items="categorias" label="Categoria">
-                            </v-select>
-                        </v-flex>
-                      </v-col>
                       <v-col cols="12" sm="12" md="12">
                         <v-text-field v-model="nombre" label="Nombre"></v-text-field>
                       </v-col>
                       <v-col cols="12" sm="6" md="6">
-                        <v-text-field type="number" v-model="stock" label="stock"></v-text-field>
+                        <v-text-field v-model="num_documento" label="Numero Documento"></v-text-field>
+                      </v-col>
+                     
+                      <v-col cols="12" sm="6" md="6">
+                        <v-flex>
+                            <v-select v-model="tipo_documento"
+                                :items="documentos" label="Tipo Documentos">
+                            </v-select>
+                        </v-flex>
                       </v-col>
                       <v-col cols="12" sm="6" md="6">
-                        <v-text-field v-model="precio_venta" label="precio_venta"></v-text-field>
+                        <v-text-field v-model="direccion" label="Dirección"></v-text-field>
                       </v-col>
-                      <v-col cols="12" sm="12" md="12">
-                        <v-text-field v-model="descripcion" label="descripcion"></v-text-field>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="telefono" label="Telefono"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="6">
+                        <v-text-field v-model="email" label="Email"></v-text-field>
                       </v-col>
                       <v-col cols="12" sm="12" md="12" v-show="valida === 1">
                         <div class="red--text" v-for="v in validaMensaje" :key="v" v-text="v"></div>
@@ -130,33 +128,33 @@
 
 <script>
 import axios from "axios";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
 export default {
   data() {
     return {
       dialog: false,
       search: "",
-      articulos: [],
+      personas: [],
       headers: [
         { text: "Opciones", value: "opciones", sortable: false },
-        { text: "Código", value: "codigo", sortable: false },
         { text: "Nombre", value: "nombre", sortable: true },
-        { text: "Categoria", value: "categoria.nombre", sortable: true },
-        { text: "Stock", value: "stock", sortable: false },
-        { text: "Precio Venta", value: "precio_venta", sortable: false },
-        { text: "Descripción", value: "descripcion", sortable: false },
-        { text: "Estado", value: "estado", sortable: false }
+        { text: "Tipo persona", value: "tipo_persona", sortable: true },
+        { text: "Tipo Documento", value: "tipo_documento", sortable: true },
+        { text: "Numero Documento", value: "num_documento", sortable: false },
+        { text: "Dirección", value: "direccion", sortable: false },
+        { text: "Telefono", value: "telefono", sortable: false },
+        { text: "Email", value: "email", sortable: false },
+        { text: "Estado", value: "estado", sortable: false },
       ],
       editedIndex: -1,
-      categoria: "",
-      categorias: [],
-      codigo: '',
+      _id: "",
       nombre: "",
-      stock: 0,
-      precio_venta: 0,
-      descripcion: '',
+      tipo_persona:"Proveedor",
+      tipo_documento:'',
+      documentos:['DNI', 'RUC', 'PASAPORTE', 'CEDULA'],
+      num_documento:'',
+      telefono:'',
+      direccion:'',
+      email:'',
       valida: 0,
       validaMensaje: [],
       adModal: 0,
@@ -179,85 +177,36 @@ export default {
 
   created() {
     this.listar();
-    this.selectCategoria();
   },
 
   methods: {
-    crearPDF(){
-      var columns = [
-        {title: "Nombre", dataKey: "nombre"},
-        {title: "Código", dataKey: "codigo"},
-        {title: "Categoria", dataKey: "categoria"},
-        {title: "Stock", dataKey: "stock"},
-        {title: "Precio Venta", dataKey: "precio_venta"},
-      ];
-      var rows = [];
-
-      this.articulos.map(function(x){
-        rows.push({
-          nombre:x.nombre,
-          codigo:x.codigo,
-          categoria:x.categoria.nombre,
-          stock:x.stock,
-          precio_venta:x.precio_venta
-        });
-      });
-      var doc = new jsPDF("p", "pt");
-      doc.autoTable(columns, rows, {
-          margin: {top:60},
-          didDrawPage: function (data) {
-            doc.text("Lista de Articulos", 40,30);
-          }
-      });
-
-      doc.save("Artículos.pdf");
-    },
-    selectCategoria(){
-      let me = this;
-      let categoriaArray=[];
-      let header = { Token: this.$store.state.token };
-      let configuracion = { headers: header };
-      //GET hace referencia al metodo http para hacer la petición a esa ruta
-      axios
-        .get("categoria/list", configuracion)
-        .then(function(response) {
-          categoriaArray = response.data;
-          categoriaArray.map(function(x){
-            me.categorias.push({text:x.nombre, value:x._id});
-          })
-        })
-        .catch(function(e) {
-          console.log(e);
-        });
-    },
     validar() {
       this.valida = 0;
       this.validaMensaje = [];
-      if(!this.categoria){
-        this.validaMensaje.push('Seleccione una categoria')
-      }
-      if (this.codigo.length > 64) {
+      
+      if (this.nombre.length < 1 || this.nombre.length > 50) {
         this.validaMensaje.push(
-          "El codigo no debe tener mas de 64 caracteres"
-        );
-      }if (this.nombre.length < 1 || this.nombre.length > 50) {
-        this.validaMensaje.push(
-          "El nombre de la categoria debe tener de 1 a 50 caracteres."
+          "El nombre de la persona debe tener de 1 a 50 caracteres."
         );
       }
-      if (this.descripcion.length > 255) {
+      if (this.num_documento.length > 20) {
         this.validaMensaje.push(
-          "La descripción del articulo debe tener un maximo de 255 caracteres."
+          "El documento debe tener un maximo de 20 caracteres."
         );
       }
-      if(this.stock < 0){
+      if (this.direccion.length > 70) {
         this.validaMensaje.push(
-          "Ingrese un stock valido"
+          "La dirección debe tener un maximo de 70 caracteres."
         );
       }
-      if(this.precio_venta < 0){
+      if (this.telefono.length > 20) {
+        this.validaMensaje.push(  
+          "La dirección debe tener un maximo de 70 caracteres."
+        );
+      }
+      if (this.email.length > 50) {
         this.validaMensaje.push(
-          "Ingrese un Precio de venta valido"
+          "El email del usuario debe tener de 1 a 50 caracteres."
         );
       }
       if (this.validaMensaje.length > 0) {
@@ -271,9 +220,9 @@ export default {
       let configuracion = { headers: header };
       //GET hace referencia al metodo http para hacer la petición a esa ruta
       axios
-        .get("articulo/list", configuracion)
+        .get("persona/listProveedores", configuracion)
         .then(function(response) {
-          me.articulos = response.data;
+          me.personas = response.data;
         })
         .catch(function(e) {
           console.log(e);
@@ -282,10 +231,10 @@ export default {
     limpiar() {
       this._id = "";
       this.nombre = "";
-      this.codigo ='';
-      this.stock=0;
-      this.precio_venta=0;
-      this.descripcion = "";
+      this.num_documento = "";
+      this.direccion = "";
+      this.telefono = "";
+      this.email = "";
       this.valida = 0;
       this.validaMensaje = [];
       this.editedIndex = -1;
@@ -302,15 +251,16 @@ export default {
         //Codigo para editar
         axios
           .put(
-            "articulo/update",
+            "persona/update",
             {
               '_id': this._id,
-              'categoria': this.categoria,
-              'codigo': this.codigo,
-              'nombre': this.nombre,
-              'stock': this.stock,
-              'precio_venta': this.precio_venta,
-              'descripcion': this.descripcion,
+              'tipo_persona': this.tipo_persona,
+              'nombre': this.nombre, 
+              'tipo_documento': this.tipo_documento,
+              'num_documento': this.num_documento,
+              'telefono': this.telefono,
+              'direccion': this.direccion,
+              'email': this.email,
             },
             configuracion
           )
@@ -328,14 +278,15 @@ export default {
         //Codigo para guardar
         axios
           .post(
-            "articulo/add",
-            { 
-              'categoria': this.categoria,
-              'codigo': this.codigo,
-              'nombre': this.nombre,
-              'stock': this.stock,
-              'precio_venta': this.precio_venta,
-              'descripcion': this.descripcion,
+            "persona/add",
+            {
+                'tipo_persona': this.tipo_persona, 
+                'nombre': this.nombre, 
+                'tipo_documento': this.tipo_documento,
+                'num_documento': this.num_documento,
+                'telefono': this.telefono,
+                'direccion': this.direccion,
+                'email': this.email,
             },
             configuracion
           )
@@ -353,12 +304,14 @@ export default {
     },
     editItem(item) {
       this._id = item._id;
-      this.categoria = item.categoria._id,
-      this.codigo = item.codigo,
-      this.nombre = item.nombre,
-      this.stock = item.stock,
-      this.precio_venta = item.precio_venta,
-      this.descripcion = item.descripcion,
+      this.rol = item.rol;
+      this.nombre = item.nombre;
+      this.tipo_documento = item.tipo_documento;
+      this.num_documento = item.num_documento;
+      this.direccion = item.direccion;
+      this.telefono = item.telefono;
+      this.email = item.email;
+      this.password = item.password;
       this.dialog = true;
       this.editedIndex = 1;
     },
@@ -380,7 +333,7 @@ export default {
       let configuracion = { headers: header };
 
       axios
-        .put("articulo/activate", { _id: this.adId }, configuracion)
+        .put("persona/activate", { _id: this.adId }, configuracion)
         .then(function(response) {
           //Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
           me.adModal = 0;
@@ -400,7 +353,7 @@ export default {
       let configuracion = { headers: header };
 
       axios
-        .put("articulo/deactivate", { _id: this.adId },configuracion)
+        .put("persona/deactivate", { _id: this.adId },configuracion)
         .then(function(response) {
           //Si la petición de arriba es exitosa, (then)entonces vamos a recibir una respuesta (response)
           me.adModal = 0;

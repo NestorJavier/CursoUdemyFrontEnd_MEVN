@@ -57,7 +57,7 @@
                 </v-list-item-title>
               </v-list-item-content>
             </v-list-item>
-            <v-list-item :to="{name:''}"><!--:to="{name:''} es para que acceda a una ruta-->
+            <v-list-item :to="{name:'ingreso'}"><!--:to="{name:''} es para que acceda a una ruta-->
               <v-list-item-action>
                 <v-icon>table_chart</v-icon>
               </v-list-item-action>
@@ -67,7 +67,7 @@
               </v-list-item-title>
               </v-list-item-content>
             </v-list-item>
-            <v-list-item :to="{name:''}"><!--:to="{name:''} es para que acceda a una ruta-->
+            <v-list-item :to="{name:'proveedor'}"><!--:to="{name:''} es para que acceda a una ruta-->
               <v-list-item-action>
                 <v-icon>table_chart</v-icon>
               </v-list-item-action>
@@ -88,7 +88,7 @@
                 </v-list-item-title>
               </v-list-item-content>
             </v-list-item>
-            <v-list-item :to="{name:''}"><!--:to="{name:''} es para que acceda a una ruta-->
+            <v-list-item :to="{name:'venta'}"><!--:to="{name:''} es para que acceda a una ruta-->
               <v-list-item-action>
                 <v-icon>table_chart</v-icon>
               </v-list-item-action>
